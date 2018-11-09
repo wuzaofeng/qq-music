@@ -1,0 +1,22 @@
+@import './normalize';
+
+$main-bg: #f4f4f4;
+body {
+  background: $main-bg;
+  font-family: "hiragino sans gb",arial;
+}
+// .page-enter-active,
+// .page-leave-active {
+//   transition: opacity .5s;
+// }
+
+// .page-enter,
+// .page-leave-active {
+//   opacity: 0;
+// }
+
+.icon {
+  display: block;
+  height: 24px;
+  width: 24px;
+}
