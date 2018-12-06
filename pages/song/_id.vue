@@ -402,6 +402,13 @@ export default {
         font-size: 40px;
         color: $main-color;
       }
+      .progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1em;
+        height: 1em;
+      }
       .play-info {
         flex: 1;
         .name {

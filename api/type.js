@@ -1,4 +1,4 @@
-export const BASE = 'http://127.0.0.1:7002/qqmusic'
+export const BASE = 'http://127.0.0.1:7004/qqmusic'
 export const BASE_MUSIC_SRC = 'http://dl.stream.qqmusic.qq.com/'
 
 export const SONG_INFO = `${BASE}/song_info`
