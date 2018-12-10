@@ -38,10 +38,11 @@
               <IconSvg :icon-class="isPlay ? 'play' : 'pause'" />
               <svg class="progress">
                 <circle
+                  :stroke-dasharray="`${dasharray} 100`"
                   class="circle"
-                  cx="23"
-                  cy="23"
-                  stroke-dasharray="6.885049161415154 113"
+                  cx="20"
+                  cy="20"
+                  r="15"
                 />
               </svg>
             </div>
@@ -73,7 +74,7 @@
           <div
             v-for="item in songlist"
             :key="item.id"
-            :class="['item', `${item.id === Number(currentsong.id) ? 'active' : ''}`]"
+            :class="['item', `${item.id === Number(currentsong.id) && !(item.action.alert === 0) ? 'active' : ''}`, `${ item.action.alert=== 0 ? 'disabled' : '' }` ]"
             @click="itemHandle(item)">
             <div class="tit">{{ item.title }}</div>
             <p :class="['desc', `${item.pay.pay_play ? 'vip' : ''}`]">
@@ -107,6 +108,7 @@ import IconSvg from '~/components/IconSvg'
 import * as Http from '~/api/api'
 import * as TYPE from '~/api/type'
 import * as Utils from '~/assets/utils'
+import { BASE_SONG_SRC } from '~/assets/config'
 
 const song_begin = 0 // 默认第几条数开始
 const song_num = 15 // 数据条数
@@ -155,13 +157,16 @@ export default {
       }, // 当前播放歌曲
       lyric: null, // 歌词
       currentAudio: '',
-      isPlay: false
+      isPlay: false,
+      midurlinfo: [],
+      dasharray: 0
     }
   },
   watch: {
     currentAudio: function(newUrl) {
       this.$nextTick(() => {
         this.play()
+        
       })
     },
     lyric: function() {
@@ -170,8 +175,9 @@ export default {
         if (this.$refs.lyrics) {
           if (!this.lyricScroll) {
             this.lyricScroll = new BScroll(this.$refs.lyrics)
+          } else {
+            this.lyricScroll.refresh()
           }
-          this.lyricScroll.refresh()
         }
       })
     }
@@ -204,22 +210,56 @@ export default {
       })
     }
     this.scroll.refresh()
+
+    // 获取播放信息
+    this.songSrc()
+
+    // 绑定timeupdate 事件
+    this.$refs.audio.ontimeupdate = this.timeupdate
   },
   methods: {
-    onMoreHandle: function() {
+    onMoreHandle() {
       const { id, song_begin, song_num, songlist: vsonglist } = this
       const begin = song_begin + song_num
-      Http.Song({ id, song_begin: begin, song_num }).then(({ cdlist }) => {
-        const { songnum, songlist } = cdlist[0]
-        this.songlist = vsonglist.concat(songlist)
-        this.song_begin = begin
-      })
+      Http.Song({ id, song_begin: begin, song_num })
+        .then(({ cdlist }) => {
+          const { songnum, songlist } = cdlist[0]
+          this.songlist = vsonglist.concat(songlist)
+          this.song_begin = begin
+          return songlist
+        })
+        .then(songlist => {
+          // 点击更多查找播放的地址，插入数据
+          this.moreSongSrc(songlist)
+        })
     },
-    playSongAll: function() {
+    async moreSongSrc(songlist) {
+      const songmid = []
+      songlist.forEach(i => {
+        if (i.action.alert) {
+          songmid.push(i.mid)
+        }
+      })
+      const res = await Http.SongSrc({ songmid })
+      this.midurlinfo = this.midurlinfo.concat(res.req_0.data.midurlinfo)
+    },
+    async songSrc() {
+      const songmid = []
+      this.songlist.forEach(i => {
+        if (i.action.alert) {
+          songmid.push(i.mid)
+        }
+      })
+      const res = await Http.SongSrc({ songmid })
+      this.midurlinfo = res.req_0.data.midurlinfo
+    },
+    playSongAll() {
       this.itemHandle(this.songlist[0])
     },
-    itemHandle: function(item) {
+    itemHandle(item) {
       const { id, mid } = item
+      // 判断是否可点击
+      if (item.action.alert === 0) return
       if (this.currentsong.id === id) {
         // 判断是否点击同一个
         this.toggle()
@@ -229,32 +269,33 @@ export default {
         let { lyric } = res
         this.currentsong = item
         this.lyric = new Lyric(Utils.formatLyric(lyric), this.lyricHandle)
-        this.lyricScroll.refresh()
       })
-      Http.Vkey({
-        songmid: mid,
-        filename: `C100${mid}.m4a`
-      }).then(res => {
-        const { filename, vkey } = res.data.items[0]
-        this.currentAudio = `${
-          TYPE.BASE_MUSIC_SRC
-        }${filename}?vkey=${vkey}&fromtag=66`
-      })
+
+      // 获取歌曲地址信息
+      const midurl = this.midurlinfo.find(i => i.songmid === mid)
+      this.currentAudio = BASE_SONG_SRC + midurl.purl
     },
     lyricHandle: function({ lineNum, txt }) {
       console.log(lineNum, txt)
     },
-    play: function() {
+    play() {
       this.$refs.audio.play()
       this.isPlay = true
     },
-    pause: function() {
+    pause() {
       this.$refs.audio.pause()
       this.isPlay = false
     },
-    toggle: function() {
+    toggle() {
       if (this.isPlay) this.pause()
       else this.play()
+    },
+    timeupdate() {
+      let { duration, currentTime } = this.$refs.audio
+      if (Number.isNaN(duration)) duration = 0
+      if (Number.isNaN(currentTime)) duration = 0
+      this.dasharray =
+        (this.$refs.audio.currentTime / this.$refs.audio.duration) * 100
     }
   }
 }
@@ -406,8 +447,14 @@ export default {
         position: absolute;
         top: 0;
         left: 0;
-        width: 1em;
-        height: 1em;
+        fill: none;
+        stroke: $circle-progress;
+        stroke-width: 2;
+        transform: translate(-50%, -50%) rotate(-90deg);
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
       }
       .play-info {
         flex: 1;
@@ -496,6 +543,10 @@ export default {
         .desc {
           color: $main-color;
         }
+      }
+      &.disabled {
+        color: #777;
+        opacity: 0.5;
       }
     }
   }
