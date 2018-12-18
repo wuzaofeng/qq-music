@@ -1,5 +1,5 @@
 <template>
-  <section class="container">
+  <section class="container max-width">
     <Head />
     <main class="main">
       <nav class="nav">
@@ -52,7 +52,6 @@ export default {
 @import '~/scss/_var.scss';
 $gray: #808080;
 .container {
-  max-width: 750px;
   width: 100%;
   min-height: 100vh;
   display: flex;

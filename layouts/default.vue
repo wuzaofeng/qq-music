@@ -1,5 +1,7 @@
 <template>
-  <nuxt/>
+  <div class="max-width">
+    <nuxt/>
+  </div>
 </template>
 <script>
 import '~/assets/iconfont'

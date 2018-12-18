@@ -5,15 +5,10 @@ body {
   background: $main-bg;
   font-family: "hiragino sans gb",arial;
 }
-// .page-enter-active,
-// .page-leave-active {
-//   transition: opacity .5s;
-// }
 
-// .page-enter,
-// .page-leave-active {
-//   opacity: 0;
-// }
+.max-width {
+  max-width: 750px;
+}
 
 .icon {
   display: block;
