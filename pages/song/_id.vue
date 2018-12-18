@@ -7,7 +7,7 @@
         :src="logo"
         :alt="dissname"
         class="info-box-bg">
-      <div class="info-box-main"> 
+      <div class="info-box-main">
         <div class="album">
           <img
             :src="logo"
@@ -53,9 +53,11 @@
                 class="lyrics">
                 <div class="lyrics-main">
                   <p
-                    v-for="item in lyric.lines"
-                    :key="item.time"
-                  >{{ item.txt }}</p>
+                    v-for="(line, index) in lyric.lines"
+                    ref="lyricsLine"
+                    :class="{'active': currentLineNum === index}"
+                    :key="line.time"
+                  >{{ line.txt }}</p>
                 </div>
               </div>
             </div>
@@ -95,7 +97,7 @@
       </div>
     </div>
     <audio
-      ref="audio" 
+      ref="audio"
       :src="currentAudio"
       class="audio" />
   </div>
@@ -105,6 +107,7 @@
 import BScroll from 'better-scroll'
 import Lyric from 'lyric-parser'
 import IconSvg from '~/components/IconSvg'
+import Loading from '~/components/Loading'
 import * as Http from '~/api/api'
 import * as TYPE from '~/api/type'
 import * as Utils from '~/assets/utils'
@@ -114,7 +117,8 @@ const song_begin = 0 // 默认第几条数开始
 const song_num = 15 // 数据条数
 export default {
   components: {
-    IconSvg
+    IconSvg,
+    Loading
   },
   filters: {
     formatCount: function(value) {
@@ -159,25 +163,25 @@ export default {
       currentAudio: '',
       isPlay: false,
       midurlinfo: [],
-      dasharray: 0
+      dasharray: 0,
+      currentLineNum: 0
     }
   },
   watch: {
-    currentAudio: function(newUrl) {
+    currentsong() {
       this.$nextTick(() => {
         this.play()
-        
       })
     },
-    lyric: function() {
+    lyric() {
       this.$nextTick(() => {
-        // 歌词滚动
         if (this.$refs.lyrics) {
           if (!this.lyricScroll) {
             this.lyricScroll = new BScroll(this.$refs.lyrics)
           } else {
             this.lyricScroll.refresh()
           }
+          this.lyric.play()
         }
       })
     }
@@ -265,37 +269,64 @@ export default {
         this.toggle()
         return
       }
+      // 清除歌词对象
+      if (this.lyric) {
+        this.lyric.seek(0)
+        this.lyric.stop()
+      }
       Http.Lyric({ musicid: id }).then(res => {
         let { lyric } = res
-        this.currentsong = item
         this.lyric = new Lyric(Utils.formatLyric(lyric), this.lyricHandle)
+        // 获取歌曲地址信息 ,获取歌词之后
+        const midurl = this.midurlinfo.find(i => i.songmid === mid)
+        this.currentAudio = BASE_SONG_SRC + midurl.purl
+        this.currentsong = item
       })
-
-      // 获取歌曲地址信息
-      const midurl = this.midurlinfo.find(i => i.songmid === mid)
-      this.currentAudio = BASE_SONG_SRC + midurl.purl
     },
-    lyricHandle: function({ lineNum, txt }) {
-      console.log(lineNum, txt)
+    lyricHandle({ lineNum, txt }) {
+      if (this.isPlay) {
+        // 过滤一下歌词, 因为点击时候清除歌词对象，歌词有时候还会出现原来的定时器，不知道是不是插件的bug
+        // 总之赋值时候过滤下, 由于只返回行数和txt，只能用txt查找
+        let flag = false
+        for (let i = 0; i < this.lyric.lines.length; i++) {
+          const item = this.lyric.lines[i]
+          if (item.txt === txt) {
+            flag = true
+            break
+          }
+        }
+        if (flag) {
+          this.currentLineNum = lineNum
+          let lineEl = this.$refs.lyricsLine[lineNum]
+          this.lyricScroll.scrollToElement(lineEl, 800)
+        }
+      }
     },
     play() {
-      this.$refs.audio.play()
       this.isPlay = true
+      this.$refs.audio.play()
     },
     pause() {
-      this.$refs.audio.pause()
       this.isPlay = false
+      this.lyric.stop()
+      this.$refs.audio.pause()
     },
     toggle() {
-      if (this.isPlay) this.pause()
-      else this.play()
+      if (this.isPlay) {
+        this.pause()
+      } else {
+        this.play()
+      }
     },
     timeupdate() {
-      let { duration, currentTime } = this.$refs.audio
-      if (Number.isNaN(duration)) duration = 0
-      if (Number.isNaN(currentTime)) duration = 0
-      this.dasharray =
-        (this.$refs.audio.currentTime / this.$refs.audio.duration) * 100
+      if (this.isPlay) {
+        let { duration, currentTime } = this.$refs.audio
+        if (Number.isNaN(duration)) duration = 0
+        if (Number.isNaN(currentTime)) duration = 1
+        const dasharray = (currentTime / duration) * 100
+        this.dasharray = Number.isNaN(dasharray) ? 0 : dasharray
+        if (currentTime && duration) this.lyric.seek(currentTime * 1000)
+      }
     }
   }
 }
@@ -432,6 +463,8 @@ export default {
       display: flex;
       align-items: center;
       flex: 1;
+      width: 100%;
+      overflow: hidden;
       .icon-play {
         position: relative;
         display: flex;
@@ -477,6 +510,10 @@ export default {
             margin: 0;
             font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
+
+            &.active {
+              color: $white;
+            }
           }
         }
       }
@@ -501,9 +538,9 @@ export default {
   .count-box {
     position: relative;
     display: flex;
-    align-items: center;
-    height: 54px;
-    margin: 0 16px -10px;
+    align-items: flex-end;
+    height: 35px;
+    margin: 0 16px 10px;
     font-size: 15px;
 
     .desc {
