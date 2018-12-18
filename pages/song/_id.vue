@@ -74,13 +74,13 @@
         </div>
         <div class="list">
           <div
-            v-for="item in songlist"
+            v-for="(item, index) in songlist"
             :key="item.id"
             :class="[
               'item',
               `${item.id === Number(currentsong.id) && !(item.action.alert === 0) ? 'active' : ''}`,
               `${(item.action.alert=== 0 || item.pay.pay_play) ? 'disabled' : '' }` ]"
-            @click="itemHandle(item)">
+            @click="itemHandle(item, index)">
             <div class="tit">{{ item.title }}</div>
             <p :class="['desc', `${item.pay.pay_play ? 'vip' : ''}`]">
               {{ `${item.singer[0].name} · ${item.album.name}` }}</p>
@@ -112,7 +112,6 @@ import Lyric from 'lyric-parser'
 import IconSvg from '~/components/IconSvg'
 import Loading from '~/components/Loading'
 import * as Http from '~/api/api'
-import * as TYPE from '~/api/type'
 import * as Utils from '~/assets/utils'
 import { BASE_SONG_SRC } from '~/assets/config'
 
@@ -167,7 +166,8 @@ export default {
       isPlay: false,
       midurlinfo: [],
       dasharray: 0,
-      currentLineNum: 0
+      currentLineNum: 0,
+      currentNum: ''
     }
   },
   watch: {
@@ -262,9 +262,9 @@ export default {
       this.midurlinfo = res.req_0.data.midurlinfo
     },
     playSongAll() {
-      this.itemHandle(this.songlist[0])
+      this.itemHandle(this.songlist[0], 0)
     },
-    itemHandle(item) {
+    itemHandle(item, index) {
       const { id, mid } = item
       // 判断是否可点击
       if (item.action.alert === 0) return
@@ -285,6 +285,7 @@ export default {
         const midurl = this.midurlinfo.find(i => i.songmid === mid)
         this.currentAudio = BASE_SONG_SRC + midurl.purl
         this.currentsong = item
+        this.currentNum = index
       })
     },
     lyricHandle({ lineNum, txt }) {
@@ -333,7 +334,14 @@ export default {
       }
     },
     ended() {
-      console.log('end')
+      const totalNum = this.songlist.length
+      let num = this.currentNum + 1 === totalNum ? 0 : this.currentNum + 1
+      const item = this.songlist[num]
+      // 判断是不是可播放，还是最后一个
+      if (item.action.alert === 0 || item.pay.pay_play) {
+        num += 1
+      }
+      this.itemHandle(this.songlist[num], num)
     }
   }
 }
