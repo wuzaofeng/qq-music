@@ -76,7 +76,10 @@
           <div
             v-for="item in songlist"
             :key="item.id"
-            :class="['item', `${item.id === Number(currentsong.id) && !(item.action.alert === 0) ? 'active' : ''}`, `${ item.action.alert=== 0 ? 'disabled' : '' }` ]"
+            :class="[
+              'item',
+              `${item.id === Number(currentsong.id) && !(item.action.alert === 0) ? 'active' : ''}`,
+              `${(item.action.alert=== 0 || item.pay.pay_play) ? 'disabled' : '' }` ]"
             @click="itemHandle(item)">
             <div class="tit">{{ item.title }}</div>
             <p :class="['desc', `${item.pay.pay_play ? 'vip' : ''}`]">
@@ -220,6 +223,7 @@ export default {
 
     // 绑定timeupdate 事件
     this.$refs.audio.ontimeupdate = this.timeupdate
+    this.$refs.audio.onended = this.ended
   },
   methods: {
     onMoreHandle() {
@@ -327,6 +331,9 @@ export default {
         this.dasharray = Number.isNaN(dasharray) ? 0 : dasharray
         if (currentTime && duration) this.lyric.seek(currentTime * 1000)
       }
+    },
+    ended() {
+      console.log('end')
     }
   }
 }
