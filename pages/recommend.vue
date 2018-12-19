@@ -30,7 +30,7 @@
           :id="item.radioid"
           type="radio"
           @click="clickHandle"
-        /> 
+        />
       </div>
     </div>
     <div class="song">
@@ -58,6 +58,7 @@ import 'swiper/dist/css/swiper.css'
 import { swiper, swiperSlide } from 'vue-awesome-swiper'
 import homeItem from '~/components/HomeItem'
 import * as Http from '~/api/api'
+import { FORMNo, Radio_SRC } from '../assets/config'
 export default {
   layout: 'index',
   async asyncData() {
@@ -84,7 +85,22 @@ export default {
   },
   methods: {
     clickHandle(type, id) {
-      this.$router.push({ name: `${type}-id`, params: { id } })
+      if (type === 'song') {
+        this.$router.push({ name: `${type}-id`, params: { id } })
+      } else {
+        Http.Radio({ labelid: id }).then(res => {
+          if (res && 0 == res.code && res.data && !(res.data.length < 1)) {
+            let a = []
+            for (let i = 0; i < res.data.length; i++) {
+              a.push(res.data[i].id)
+            }
+            a.sort(function(n, a) {
+              return Math.random() - Math.random()
+            })
+            location.href = Radio_SRC + FORMNo + '&songid=' + a.join(',')
+          }
+        })
+      }
     }
   }
 }

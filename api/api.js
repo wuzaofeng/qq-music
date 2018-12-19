@@ -19,3 +19,8 @@ export const SongSrc = function(data) {
 export const Lyric = function(params) {
   return fetch({ url: TYPE.LYRIC, params })
 }
+
+// 获取电台歌单列表
+export const Radio = function(data) {
+  return fetch({ url: TYPE.Radio, data, method: 'post' })
+}
