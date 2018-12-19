@@ -24,3 +24,13 @@ export const Lyric = function(params) {
 export const Radio = function(data) {
   return fetch({ url: TYPE.Radio, data, method: 'post' })
 }
+
+// 获取排行榜
+export const Ranking = function() {
+  return fetch({ url: TYPE.Ranking })
+}
+
+// 获取排行榜详情
+export const RankingInfo = function(params) {
+  return fetch({ url: TYPE.Ranking_INFO, params })
+}

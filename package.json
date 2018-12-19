@@ -1,11 +1,11 @@
 {
   "name": "QQ",
   "version": "1.0.0",
-  "description": "My sublime Nuxt.js project",
+  "description": "QQ音乐是腾讯公司推出的一款网络音乐服务产品，海量音乐在线试听、新歌热歌在线首发、歌词翻译、手机铃声下载、高品质无损音乐试听、海量无损曲库、正版音乐下载、空间背景音乐设置、MV观看等，是互联网音乐播放和下载的优选。",
   "author": "wuzaofeng",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon server/index.js --progress --watch --fix server",
+    "dev": "cross-env NODE_ENV=development nodemon server/index.js --watch --fix server",
     "build": "nuxt build",
     "start": "cross-env NODE_ENV=production node server/index.js",
     "generate": "nuxt generate",
