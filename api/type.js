@@ -7,3 +7,4 @@ export const LYRIC = `${BASE}/lyric`
 export const Radio = `${BASE}/radio`
 export const Ranking = `${BASE}/ranking`
 export const Ranking_INFO = `${BASE}/ranking_info`
+export const Ranking_Details = `${BASE}/ranking_details`

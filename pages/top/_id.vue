@@ -21,7 +21,7 @@
         </div>
         <div class="opt-box">
           <button
-            v-if="!currentsong.id"
+            v-if="!currentsong"
             class="btn"
             @click="playSongAll">播放全部</button>
           <div
@@ -41,7 +41,7 @@
               </svg>
             </div>
             <div class="play-info">
-              <h2 class="name">{{ currentsong.name }}</h2>
+              <h2 class="name">{{ currentsong.data.songname }}</h2>
               <div
                 ref="lyrics"
                 class="lyrics">
@@ -59,20 +59,62 @@
         </div>
       </div>
     </div>
+    <div
+      ref="wrap"
+      class="wrap">
+      <div class="content">
+        <div class="count-box">
+          <div class="desc">排行榜<span class="number">共{{ total_song_num }}首</span></div>
+        </div>
+        <div class="list">
+          <div
+            v-for="(item, index) in songlist"
+            :key="item.data.songid"
+            :class="[
+              'item',
+              `${index === currentNum ? 'active' : ''}`,
+              `${(item.data.pay.payplay) ? 'disabled' : '' }` ]"
+            @click="itemHandle(item, index)">
+            <div
+              :class="[
+                'order',
+                `${index < 3 ? 'decimal' : ''}` ]">
+              {{ index + 1 }}
+            </div>
+            <div
+              class="
+              con">
+              <div class="tit">{{ item.data.songname }}</div>
+              <p :class="['desc', `${item.data.pay.payplay ? 'vip' : ''}`]">
+                {{ `${item.data.singer[0].name} · ${item.data.songname}` }}</p>
+            </div>
+          </div>
+        </div>
+        <qui :desc="desc" />
+      </div>
+    </div>
+    <audio
+      ref="audio"
+      :src="currentAudio"
+      class="audio" />
   </div>
 </template>
 
 <script>
-import BScroll from 'better-scroll'
 import Lyric from 'lyric-parser'
 import IconSvg from '~/components/IconSvg'
 import Loading from '~/components/Loading'
+import Qui from '~/components/qui'
 import * as Http from '~/api/api'
 import * as Utils from '~/assets/utils'
 import { BASE_SONG_SRC } from '~/assets/config'
-
+import songMix from '~/mixins/song'
 export default {
-  components: {},
+  components: {
+    IconSvg,
+    Qui
+  },
+  mixins: [songMix],
   async asyncData({ params }) {
     const { id } = params
     const {
@@ -89,14 +131,13 @@ export default {
       total_song_num,
       date,
       day_of_year,
-      update_time
+      update_time,
+      desc: topinfo.info
     }
   },
   data() {
     return {
-      currentsong: {
-        id: ''
-      }, // 当前播放歌曲
+      currentsong: '', // 当前播放歌曲
       lyric: null, // 歌词
       currentAudio: '',
       isPlay: false,
@@ -114,7 +155,44 @@ export default {
       return text
     }
   },
-  watch: {}
+  methods: {
+    async songSrc() {
+      const songmid = []
+      this.songlist.forEach(i => {
+        if (!i.data.payplay) {
+          songmid.push(i.data.songmid)
+        }
+      })
+      const res = await Http.SongSrc({ songmid })
+      this.midurlinfo = res.req_0.data.midurlinfo
+    },
+
+    itemHandle(item, index) {
+      const {
+        data: { songid, songmid }
+      } = item
+      if (item.data.pay.payplay) return
+      if (this.currentNum === index) {
+        // 判断是否点击同一个
+        this.toggle()
+        return
+      }
+      // 清除歌词对象
+      if (this.lyric) {
+        this.lyric.seek(0)
+        this.lyric.stop()
+      }
+      Http.Lyric({ musicid: songid }).then(res => {
+        let { lyric } = res
+        this.lyric = new Lyric(Utils.formatLyric(lyric), this.lyricHandle)
+        // 获取歌曲地址信息 ,获取歌词之后
+        const midurl = this.midurlinfo.find(i => i.songmid === songmid)
+        this.currentAudio = BASE_SONG_SRC + midurl.purl
+        this.currentsong = item
+        this.currentNum = index
+      })
+    }
+  }
 }
 </script>
 
@@ -341,10 +419,40 @@ export default {
 
   .list {
     .item {
+      display: flex;
+      &.active {
+        .order,
+        .tit,
+        .desc {
+          color: $main-color;
+        }
+      }
+      &.disabled {
+        color: #777;
+        opacity: 0.5;
+      }
+    }
+    .order {
+      width: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: -16px;
+      color: #777;
+      &.decimal {
+        color: #ff400b !important;
+      }
+    }
+    .con {
+      flex: 1;
       padding: 10px 16px;
+      overflow: hidden;
       .tit {
         font-size: 16px;
         color: $gray;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
       .desc {
         display: block;
@@ -362,16 +470,6 @@ export default {
           background-size: 18px 10px;
         }
       }
-      &.active {
-        .tit,
-        .desc {
-          color: $main-color;
-        }
-      }
-      &.disabled {
-        color: #777;
-        opacity: 0.5;
-      }
     }
   }
   .more {
@@ -382,41 +480,6 @@ export default {
     margin-bottom: 15px;
     font-size: 14px;
     color: $gray;
-  }
-  .qui-tit {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    padding: 0 40px;
-    overflow: hidden;
-    text-align: center;
-    font-size: 16px;
-    color: $gray;
-  }
-  .qui-text {
-    position: relative;
-    margin: 0 16px 20px;
-    overflow: hidden;
-    text-align: justify;
-    word-wrap: break-word;
-    font-size: 14px;
-    color: $gray;
-  }
-
-  .brand {
-    padding: 20px 0;
-    .name {
-      padding-top: 36px;
-      margin: 0;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 400;
-      color: $black;
-      background: url('../../static/images/logo.svg') no-repeat center top;
-      background-size: 32px 32px;
-    }
   }
 }
 </style>

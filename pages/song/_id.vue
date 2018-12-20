@@ -90,13 +90,9 @@
           v-if="songnum !== songlist.length"
           class="more"
           @click="onMoreHandle">点击加载更多歌曲</div>
-        <div class="qui-tit">歌单简介</div>
-        <div
-          class="qui-text"
-          v-html="desc" />
-        <div class="brand">
-          <p class="name">QQ音乐</p>
-        </div>
+        <qui
+          :desc="desc"
+          title="歌单简介"/>
       </div>
     </div>
     <audio
@@ -111,8 +107,10 @@ import BScroll from 'better-scroll'
 import Lyric from 'lyric-parser'
 import IconSvg from '~/components/IconSvg'
 import Loading from '~/components/Loading'
+import Qui from '~/components/qui'
 import * as Http from '~/api/api'
 import * as Utils from '~/assets/utils'
+import songMix from '~/mixins/song'
 import { BASE_SONG_SRC } from '~/assets/config'
 
 const song_begin = 0 // 默认第几条数开始
@@ -120,13 +118,15 @@ const song_num = 15 // 数据条数
 export default {
   components: {
     IconSvg,
-    Loading
+    Loading,
+    Qui
   },
   filters: {
     formatCount: function(value) {
       return Utils.formatCount(value)
     }
   },
+  mixins: [songMix],
   async asyncData({ params }) {
     const { id } = params
     const { cdlist } = await Http.Song({ id, song_begin, song_num })
@@ -170,61 +170,6 @@ export default {
       currentNum: ''
     }
   },
-  watch: {
-    currentsong() {
-      this.$nextTick(() => {
-        this.play()
-      })
-    },
-    lyric() {
-      this.$nextTick(() => {
-        if (this.$refs.lyrics) {
-          if (!this.lyricScroll) {
-            this.lyricScroll = new BScroll(this.$refs.lyrics)
-          } else {
-            this.lyricScroll.refresh()
-          }
-          this.lyric.play()
-        }
-      })
-    }
-  },
-  mounted() {
-    // 最外层滚动条
-    if (!this.scroll) {
-      this.scroll = new BScroll(this.$refs.wrap, {
-        click: true,
-        probeType: 3
-      })
-      this.scroll.on('scroll', pos => {
-        const { y } = pos
-        if (y < -170) {
-          this.$refs.main.setAttribute(
-            'style',
-            `transform: translate(0, -170px); translateZ(0px);`
-          )
-        } else if (y > 0) {
-          this.$refs.main.setAttribute(
-            'style',
-            'transform: translate(0, 0); translateZ(0px);'
-          )
-        } else {
-          this.$refs.main.setAttribute(
-            'style',
-            `transform: translate(0, ${y}px); translateZ(0px);`
-          )
-        }
-      })
-    }
-    this.scroll.refresh()
-
-    // 获取播放信息
-    this.songSrc()
-
-    // 绑定timeupdate 事件
-    this.$refs.audio.ontimeupdate = this.timeupdate
-    this.$refs.audio.onended = this.ended
-  },
   methods: {
     onMoreHandle() {
       const { id, song_begin, song_num, songlist: vsonglist } = this
@@ -261,9 +206,6 @@ export default {
       const res = await Http.SongSrc({ songmid })
       this.midurlinfo = res.req_0.data.midurlinfo
     },
-    playSongAll() {
-      this.itemHandle(this.songlist[0], 0)
-    },
     itemHandle(item, index) {
       const { id, mid } = item
       // 判断是否可点击
@@ -287,61 +229,6 @@ export default {
         this.currentsong = item
         this.currentNum = index
       })
-    },
-    lyricHandle({ lineNum, txt }) {
-      if (this.isPlay) {
-        // 过滤一下歌词, 因为点击时候清除歌词对象，歌词有时候还会出现原来的定时器，不知道是不是插件的bug
-        // 总之赋值时候过滤下, 由于只返回行数和txt，只能用txt查找
-        let flag = false
-        for (let i = 0; i < this.lyric.lines.length; i++) {
-          const item = this.lyric.lines[i]
-          if (item.txt === txt) {
-            flag = true
-            break
-          }
-        }
-        if (flag) {
-          this.currentLineNum = lineNum
-          let lineEl = this.$refs.lyricsLine[lineNum]
-          this.lyricScroll.scrollToElement(lineEl, 800)
-        }
-      }
-    },
-    play() {
-      this.isPlay = true
-      this.$refs.audio.play()
-    },
-    pause() {
-      this.isPlay = false
-      this.lyric.stop()
-      this.$refs.audio.pause()
-    },
-    toggle() {
-      if (this.isPlay) {
-        this.pause()
-      } else {
-        this.play()
-      }
-    },
-    timeupdate() {
-      if (this.isPlay && this.$refs.audio) {
-        let { duration = '', currentTime = '' } = this.$refs.audio
-        if (Number.isNaN(duration)) duration = 0
-        if (Number.isNaN(currentTime)) duration = 1
-        const dasharray = (currentTime / duration) * 100
-        this.dasharray = Number.isNaN(dasharray) ? 0 : dasharray
-        if (currentTime && duration) this.lyric.seek(currentTime * 1000)
-      }
-    },
-    ended() {
-      const totalNum = this.songlist.length
-      let num = this.currentNum + 1 === totalNum ? 0 : this.currentNum + 1
-      const item = this.songlist[num]
-      // 判断是不是可播放，还是最后一个
-      if (item.action.alert === 0 || item.pay.pay_play) {
-        num += 1
-      }
-      this.itemHandle(this.songlist[num], num)
     }
   }
 }

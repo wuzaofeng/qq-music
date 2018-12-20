@@ -31,6 +31,11 @@ export const Ranking = function() {
 }
 
 // 获取排行榜详情
-export const RankingInfo = function(params) {
-  return fetch({ url: TYPE.Ranking_INFO, params })
+export const RankingInfo = function(data) {
+  return fetch({ url: TYPE.Ranking_INFO, data, method: 'post' })
+}
+
+// 获取排行榜列表的信息
+export const RankingDetails = function(data) {
+  return fetch({ url: TYPE.Ranking_Details, data, method: 'post' })
 }
