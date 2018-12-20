@@ -65,6 +65,7 @@ $gray: #808080;
 }
 .nav {
   display: flex;
+  background-color: $white;
   .item {
     flex: 1;
     text-align: center;

@@ -79,6 +79,15 @@ ul {
     width: 100px;
     height: 100px;
     display: block;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      background: rgba(0, 0, 0, 0.2);
+    }
     img {
       display: block;
       width: 100px;

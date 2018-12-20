@@ -39,3 +39,8 @@ export const RankingInfo = function(data) {
 export const RankingDetails = function(data) {
   return fetch({ url: TYPE.Ranking_Details, data, method: 'post' })
 }
+
+// 热门搜索
+export const HotKeys = function() {
+  return fetch({ url: TYPE.HOT_KEYS })
+}

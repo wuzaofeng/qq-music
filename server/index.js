@@ -3,18 +3,18 @@ const consola = require('consola')
 const { Nuxt, Builder } = require('nuxt')
 
 const app = new Koa()
-const host = process.env.HOST || '127.0.0.1'
-const port = process.env.PORT || RndNum(4)
+const host = process.env.HOST || '10.10.10.112'
+const port = process.env.PORT || '2222'
 
 // Import and Set Nuxt.js options
 let config = require('../nuxt.config.js')
 config.dev = !(app.env === 'production')
 
-function RndNum(n) {
-  let rnd = ''
-  for (var i = 0; i < n; i++) rnd += Math.floor(Math.random() * 10 + 1)
-  return rnd
-}
+// function RndNum(n) {
+//   let rnd = ''
+//   for (var i = 0; i < n; i++) rnd += Math.floor(Math.random() * 10 + 1)
+//   return rnd
+// }
 
 async function start() {
   // Instantiate nuxt.js
