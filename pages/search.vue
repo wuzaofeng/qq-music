@@ -35,12 +35,13 @@
         <div
           v-for="(h, i) in history"
           :key="i"
-          class="item"
-          @click="historyHandle(h)">
+          class="item">
           <span class="icon">
             <IconSvg icon-class="time" />
           </span>
-          <span class="name">{{ h }}</span>
+          <span
+            class="name"
+            @click="historyHandle(h)">{{ h }}</span>
           <span
             class="close"
             @click="closeHistory(h)" />
