@@ -58,7 +58,7 @@ import 'swiper/dist/css/swiper.css'
 import { swiper, swiperSlide } from 'vue-awesome-swiper'
 import homeItem from '~/components/HomeItem'
 import * as Http from '~/api/api'
-import { FORMNo, Radio_SRC } from '../assets/config'
+import { FORMNo, Radio_SRC } from '~/assets/config'
 export default {
   layout: 'index',
   async asyncData() {

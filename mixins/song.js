@@ -14,7 +14,6 @@ const songMix = {
             this.lyricScroll = new BScroll(this.$refs.lyrics)
           } else {
             this.lyricScroll.refresh()
-            this.lyricScroll.scrollTo(0, 0, 0)
           }
           this.lyric.play()
         }
@@ -23,34 +22,11 @@ const songMix = {
   },
   mounted() {
     // 最外层滚动条
-    if (!this.scroll) {
-      this.scroll = new BScroll(this.$refs.wrap, {
-        click: true,
-        probeType: 3
-      })
-      this.scroll.on('scroll', pos => {
-        const { y } = pos
-        if (this.$refs.main) {
-          if (y < -170) {
-            this.$refs.main.setAttribute(
-              'style',
-              `transform: translate(0, -170px); translateZ(0px);`
-            )
-          } else if (y > 0) {
-            this.$refs.main.setAttribute(
-              'style',
-              'transform: translate(0, 0); translateZ(0px);'
-            )
-          } else {
-            this.$refs.main.setAttribute(
-              'style',
-              `transform: translate(0, ${y}px); translateZ(0px);`
-            )
-          }
-        }
-      })
-    }
-    this.scroll.refresh()
+    this.scroll = new BScroll(this.$refs.wrap, {
+      click: true,
+      probeType: 3
+    })
+    this.scroll.on('scroll', this.scrollHandle)
 
     // 获取播放信息
     this.songSrc()
@@ -60,6 +36,27 @@ const songMix = {
     this.$refs.audio.onended = this.ended
   },
   methods: {
+    scrollHandle(pos) {
+      const { y } = pos
+      if (this.$refs.main) {
+        if (y < -170) {
+          this.$refs.main.setAttribute(
+            'style',
+            `transform: translate(0, -170px); translateZ(0px);`
+          )
+        } else if (y > 0) {
+          this.$refs.main.setAttribute(
+            'style',
+            'transform: translate(0, 0); translateZ(0px);'
+          )
+        } else {
+          this.$refs.main.setAttribute(
+            'style',
+            `transform: translate(0, ${y}px); translateZ(0px);`
+          )
+        }
+      }
+    },
     playSongAll() {
       this.itemHandle(this.songlist[0], 0)
     },

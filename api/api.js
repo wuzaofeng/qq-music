@@ -44,3 +44,8 @@ export const RankingDetails = function(data) {
 export const HotKeys = function() {
   return fetch({ url: TYPE.HOT_KEYS })
 }
+
+// 搜索歌词
+export const SearchKeyWords = function(params) {
+  return fetch({ url: TYPE.SEARCH_KEYWORDS, params })
+}

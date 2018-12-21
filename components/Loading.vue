@@ -35,55 +35,46 @@ export default {
 
 <style scoped>
 .loading {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
+  position: relative;
 }
 
 .main {
   position: relative;
   width: 80px;
-  height: 40px;
+  margin-left: -40px;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }
 .loading span {
   display: inline-block;
   width: 8px;
-  height: 100%;
+  height: 16px;
   border-radius: 4px;
   background: lightgreen;
-  -webkit-animation: load 1s ease infinite;
-}
-
-.main {
+  animation: load 1s ease infinite;
 }
 
 @keyframes load {
   0%,
   100% {
-    height: 40px;
+    height: 16px;
     background: lightgreen;
   }
   50% {
-    height: 70px;
+    height: 30px;
     margin: -15px 0;
     background: lightblue;
   }
 }
 .loading span:nth-child(2) {
-  -webkit-animation-delay: 0.2s;
+  animation-delay: 0.2s;
 }
 .loading span:nth-child(3) {
-  -webkit-animation-delay: 0.4s;
+  animation-delay: 0.4s;
 }
 .loading span:nth-child(4) {
-  -webkit-animation-delay: 0.6s;
+  animation-delay: 0.6s;
 }
 .loading span:nth-child(5) {
-  -webkit-animation-delay: 0.8s;
+  animation-delay: 0.8s;
 }
 </style>
